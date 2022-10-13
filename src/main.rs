@@ -18,7 +18,10 @@ fn main() -> Result<()> {
         Subcommand::Get { uuid } => {
             println!("Get logs from {}", uuid);
 
-            let on_device = "journalctl -o json | gzip | base64; \
+            let on_device = "journalctl -o json | gzip > /mnt/data/logs.gz; \
+                curl -s -F 'file=@/mnt/data/logs.gz' https://file.io; \
+                rm /mnt/data/logs.gz; \
+                sync; \
                 exit; \
                 \n";
 
@@ -40,10 +43,24 @@ fn main() -> Result<()> {
 
             let output = child.wait_with_output()?;
 
-            if output.status.success() {
-                let raw_output = String::from_utf8(output.stdout).unwrap();
-                println!("{}", raw_output);
+            if !output.status.success() {
+                panic!("No success!!!");
             }
+
+            let raw_output = String::from_utf8(output.stdout).unwrap();
+
+            // =============================================================
+            //     Welcome to balenaOS
+            // =============================================================
+            let prelude = format!("{0}\n    Welcome to balenaOS\n{0}\n", "=".repeat(61));
+
+            let (front, back) = raw_output.split_at(prelude.len());
+
+            if prelude != front {
+                panic!("Not matching!!!");
+            }
+
+            println!("{}", back);
         }
     }
 
