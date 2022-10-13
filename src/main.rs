@@ -2,7 +2,10 @@ use anyhow::Result;
 
 use clap::Parser;
 
-use std::{process::{Command, Stdio}, io::Write};
+use std::{
+    io::Write,
+    process::{Command, Stdio},
+};
 
 mod cli;
 
@@ -15,9 +18,7 @@ fn main() -> Result<()> {
         Subcommand::Get { uuid } => {
             println!("Get logs from {}", uuid);
 
-            let on_device = "journalctl -o json | gzip > /mnt/data/logs.gz; \
-                curl -s -F 'file=@/mnt/data/logs.gz' https://file.io; \
-                rm /mnt/data/logs.gz; \
+            let on_device = "journalctl -o json | gzip | base64; \
                 exit; \
                 \n";
 
@@ -29,9 +30,13 @@ fn main() -> Result<()> {
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
-            
-            child.stdin.as_mut().unwrap().write_all(on_device.as_bytes()).unwrap();
 
+            child
+                .stdin
+                .as_mut()
+                .unwrap()
+                .write_all(on_device.as_bytes())
+                .unwrap();
 
             let output = child.wait_with_output()?;
 
