@@ -5,7 +5,13 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
+serde_json = "*"
+flate2 = "*"
 
 [dependencies.clap]
 version = "4"
 features = ["derive"]
+
+[dependencies.reqwest]
+version = "*"
+features = ["blocking"]

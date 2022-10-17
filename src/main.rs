@@ -2,8 +2,12 @@ use anyhow::Result;
 
 use clap::Parser;
 
+use serde_json::Value;
+
+use flate2::read::GzDecoder;
+
 use std::{
-    io::Write,
+    io::{Read, Write},
     process::{Command, Stdio},
 };
 
@@ -60,7 +64,17 @@ fn main() -> Result<()> {
                 panic!("Not matching!!!");
             }
 
-            println!("{}", back);
+            let file_io: Value = serde_json::from_str(back).unwrap();
+            let link = file_io["link"].as_str().unwrap();
+            println!("{}", link);
+
+            let bytes = reqwest::blocking::get(link).unwrap().bytes().unwrap();
+
+            let mut decoder = GzDecoder::new(&*bytes);
+            let mut string = String::new();
+            decoder.read_to_string(&mut string).unwrap();
+
+            println!("{}", string);
         }
     }
 
